@@ -84,3 +84,10 @@
   color: #777;
   align-self: center;
 }
+
+.posts-container .post-card .comments-container form {
+  width: 100%;
+}
+.posts-container .post-card .comments-container form input {
+  width: 100%;
+}
