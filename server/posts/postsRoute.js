@@ -1,6 +1,6 @@
 const express = require("express");`1`
 
-const db = require("../data/db");
+const db = require("../../data/db");
 
 const router = express.Router();
 

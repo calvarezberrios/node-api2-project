@@ -30,9 +30,9 @@ const CommentForm = ({postId, setComments}) => {
         e.preventDefault();
 
         if(comment.text){
-            Axios.post(`http://localhost:5000/api/posts/${postId}/comments`, comment)
+            Axios.post(`/api/posts/${postId}/comments`, comment)
                 .then(() => {
-                    Axios.get(`http://localhost:5000/api/posts/${postId}/comments`)
+                    Axios.get(`/api/posts/${postId}/comments`)
                         .then(res => {
                             setComments(res.data);
                         })

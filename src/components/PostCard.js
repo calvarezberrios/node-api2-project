@@ -62,7 +62,7 @@ export default function RecipeReviewCard({post, posts, setPosts}) {
 
     const deletePost = () => {
         
-        Axios.delete(`http://localhost:5000/api/posts/${post.id}`)
+        Axios.delete(`/api/posts/${post.id}`)
             .then(() => {
                 setPosts(posts.filter(p => p.id !== post.id));
             })
@@ -72,7 +72,7 @@ export default function RecipeReviewCard({post, posts, setPosts}) {
     }
 
     useEffect(() => {
-        Axios.get(`http://localhost:5000/api/posts/${post.id}/comments`)
+        Axios.get(`/api/posts/${post.id}/comments`)
             .then(res => {
                 setComments(res.data);
             })
