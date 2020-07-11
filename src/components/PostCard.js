@@ -12,16 +12,16 @@ import Typography from '@material-ui/core/Typography';
 import { red } from '@material-ui/core/colors';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
-import Button from '@material-ui/core/Button';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import TextField from "@material-ui/core/TextField";
 
 import Axios from 'axios';
 import CommentForm from './CommentForm';
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        maxWidth: 345,
+        width: 345,
     },
     media: {
         height: 0,
@@ -47,6 +47,15 @@ export default function RecipeReviewCard({post, posts, setPosts}) {
     const [expanded, setExpanded] = React.useState(false);
     const [comments, setComments] = useState([]);
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [postToEdit, setPostToEdit] = useState(post);
+
+    const handleChange = e => {
+        setPostToEdit({
+            ...postToEdit,
+            [e.target.name]: e.target.value
+        });
+    }
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -60,14 +69,39 @@ export default function RecipeReviewCard({post, posts, setPosts}) {
         setExpanded(!expanded);
     };
 
+    const editPost = e => {
+
+        if(!isEditing){
+            e.target.textContent = "Save";
+        } else {
+            Axios.put(`/api/posts/${post.id}`, postToEdit)
+                .then(() => {
+                    setPosts(posts.map(post => {
+                        if(post.id === postToEdit.id) {
+                            return postToEdit;
+                        }
+                        return post;
+                    }));
+                })
+                .catch(err => console.log(err.message, err.response.data));
+
+            e.target.textContent = "Edit";
+        }
+        setIsEditing(!isEditing);
+        handleClose();
+    }
+
     const deletePost = () => {
         
-        Axios.delete(`/api/posts/${post.id}`)
-            .then(() => {
-                setPosts(posts.filter(p => p.id !== post.id));
-            })
-            .catch(err => console.log(err.message, err.response));
-            
+        const confirmed = window.confirm("Are you sure you want to delete this post?");
+
+        if(confirmed) {
+            Axios.delete(`/api/posts/${post.id}`)
+                .then(() => {
+                    setPosts(posts.filter(p => p.id !== post.id));
+                })
+                .catch(err => console.log(err.message, err.response));
+        }
         handleClose();
     }
 
@@ -98,19 +132,24 @@ export default function RecipeReviewCard({post, posts, setPosts}) {
                         open={Boolean(anchorEl)}
                         onClose={handleClose}
                     >
-                        <MenuItem onClick={handleClose}>Edit</MenuItem>
+                        <MenuItem onClick={editPost}>Edit</MenuItem>
                         <MenuItem onClick={deletePost}>Delete</MenuItem>
                     </Menu>
                 </>}
-                title={post.contents}
+                title={!isEditing ? post.contents : <TextField id = "contents" multiline variant = "outlined" type = "text" label = "Title" name = "contents" value = {postToEdit.contents} onChange = {handleChange} />}
                 subheader={post.created_at}
             />
                     
             
             <CardContent>
-                <Typography variant="body2" color="textSecondary" component="p">
-                    {post.title}
-                </Typography>
+                {!isEditing ?
+                    <Typography variant="body2" color="textSecondary" component="p">
+                        {post.title} 
+                    </Typography>
+                :
+                    <TextField id = "title" multiline variant = "outlined" type = "text" label = "Contents" name = "title" value = {postToEdit.title} onChange = {handleChange} />
+                }
+                
             </CardContent>
             <CardActions disableSpacing>
                 {/* <IconButton aria-label="add to favorites">

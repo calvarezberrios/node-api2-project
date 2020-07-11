@@ -1,12 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
-import InputBase from '@material-ui/core/InputBase';
 import { fade, makeStyles } from '@material-ui/core/styles';
 import MenuIcon from '@material-ui/icons/Menu';
-import SearchIcon from '@material-ui/icons/Search';
+import AddIcon from '@material-ui/icons/Add';
+import Modal from '@material-ui/core/Modal';
+import TextField from "@material-ui/core/TextField";
+import Button from '@material-ui/core/Button';
+import Axios from 'axios';
+
+const initialValues = {
+    title: "",
+    contents: ""
+};
+
+function rand() {
+    return Math.round(Math.random() * 20) - 10;
+}
+
+function getModalStyle() {
+    const top = 50 + rand();
+    const left = 50 + rand();
+
+    return {
+        top: `${top}%`,
+        left: `${left}%`,
+        transform: `translate(-${top}%, -${left}%)`,
+    };
+}
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -61,10 +84,94 @@ const useStyles = makeStyles((theme) => ({
             },
         },
     },
+    paper: {
+        position: 'absolute',
+        width: 400,
+        backgroundColor: theme.palette.background.paper,
+        border: '2px solid #ccc',
+        boxShadow: theme.shadows[5],
+        padding: theme.spacing(2, 4, 3),
+        display: "flex",
+        flexDirection: "column",
+
+    },
 }));
 
-export default function SearchAppBar() {
+export default function SearchAppBar({posts, setPosts}) {
     const classes = useStyles();
+    const [modalStyle] = React.useState(getModalStyle);
+    const [open, setOpen] = React.useState(false);
+    const [newPost, setNewPost] = useState(initialValues);
+
+    const handleChange = e => {
+        setNewPost({
+            ...newPost,
+            [e.target.name]: e.target.value
+        });
+    }
+
+    const handleOpen = () => {
+        setOpen(true);
+    };
+    
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+    const createPost = e => {
+        //e.preventDefault();
+
+        if(newPost.title && newPost.contents ) {
+            Axios.post("/api/posts", newPost)
+                .then(res => {
+                    console.log(res.data);
+                    setPosts(posts.map(post => {
+                        if(post.id === res.data.id) {
+                            return {
+                                ...post,
+                                title: res.data.title,
+                                contents: res.data.contents
+                            };
+                        }
+                        return post;
+                    }))
+                    handleClose();
+                })
+                .catch(err => console.log(err.message, err.response.data));
+        }
+    }
+
+    const body = (
+        <form style = {modalStyle} className = {classes.paper} onSubmit = {createPost} autoComplete = "off">
+            <h3>Create a Post...</h3>
+            <TextField 
+                id = "contents"
+                type = "text"
+                name = "contents"
+                variant = "outlined"
+                label = "Title"
+                value = {newPost.contents}
+                onChange = {handleChange}
+            />
+            <br />
+            <TextField 
+                id = "title"
+                type = "text"
+                name = "title"
+                variant = "outlined"
+                label = "Contents"
+                value = {newPost.title}
+                onChange = {handleChange}
+                multiline
+                rows = {4}
+            />
+            <br />
+            <div style = {{textAlign: "center"}}>
+                <Button variant = "contained" type = "submit">Submit</Button>{" "}
+                <Button variant = "contained" onClick = {() => {setNewPost(initialValues); handleClose()}}>Cancel</Button>
+            </div>
+        </form>
+    );
 
     return (
         <div className={classes.root}>
@@ -81,21 +188,26 @@ export default function SearchAppBar() {
                     <Typography className={classes.title} variant="h6" noWrap>
                         My Posts API
                     </Typography>
-                    <div className={classes.search}>
-                        <div className={classes.searchIcon}>
-                            <SearchIcon />
-                        </div>
-                        <InputBase
-                            placeholder="Search…"
-                            classes={{
-                                root: classes.inputRoot,
-                                input: classes.inputInput,
-                            }}
-                            inputProps={{ 'aria-label': 'search' }}
-                        />
-                    </div>
+                    <IconButton
+                        edge="end"
+                        className={classes.menuButton}
+                        color="inherit"
+                        aria-label="Create Post"
+                        onClick = {handleOpen}
+                    >
+                        <AddIcon />
+                    </IconButton>
+                    
                 </Toolbar>
             </AppBar>
+            <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="simple-modal-title"
+                aria-describedby="simple-modal-description"
+            >
+                {body}
+            </Modal>
         </div>
     );
 }
